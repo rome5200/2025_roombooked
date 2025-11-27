@@ -286,7 +286,7 @@ function generateScheduleHtml(roomId, scheduleData) {
       <!-- 주간 시간표 -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex-1 flex flex-col min-h-[220px]">
         <div class="flex items-center justify-between mb-2">
-          <div class="text-sm font-semibold text-gray-800">주간 시간표</div>
+          <div class="text-sm font-semibold text-gray-800">강의실 시간표 및 예약 현황</div>
           <div class="flex items-center space-x-3 text-[10px] text-gray-500">
             <div class="flex items-center">
               <span class="w-3 h-3 rounded-full bg-rose-200 border border-rose-300 mr-1"></span> 수업중
@@ -296,7 +296,7 @@ function generateScheduleHtml(roomId, scheduleData) {
             </div>
           </div>
         </div>
-        <div class="overflow-x-auto text-xs">
+        <div class="overflow-x-auto overflow-y-auto text-xs">
           <table class="w-full border border-gray-200 rounded-lg text-[11px]">
             <thead class="bg-gray-50">
               <tr>
