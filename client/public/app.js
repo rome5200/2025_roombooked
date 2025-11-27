@@ -244,79 +244,86 @@ function generateScheduleHtml(roomId, scheduleData) {
   });
 
   // ----- 3) 최종 카드 HTML (프로토타입 스타일) -----
-  return `
-    <div class="h-full flex flex-col gap-4">
-      <!-- 상단 카드 (방 정보) -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <div class="flex items-center mb-4">
-          <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center mr-3">
-            <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z"/>
-            </svg>
-          </div>
-          <div>
-            <div class="text-sm font-semibold text-gray-700">시간표 및 예약 현황</div>
-            <div class="text-xs text-gray-400">선택한 강의실의 정규 수업과 학생 예약 정보를 보여줍니다.</div>
-          </div>
+  // ----- 3) 최종 카드 HTML (프로토타입 스타일) -----
+return `
+  <div class="h-full flex flex-col gap-4">
+    <!-- 상단 카드 (강의실 정보) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div class="flex items-center mb-4">
+        <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center mr-3">
+          <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z"/>
+          </svg>
         </div>
-
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <div class="text-base font-semibold text-gray-900">${room.name}</div>
-            <div class="text-xs text-gray-500">${prettyDate}</div>
-          </div>
-          <div class="text-xs text-gray-500">
-            수용인원: <span class="font-semibold">${room.capacity}</span>명
-          </div>
-        </div>
-
-        <div class="flex flex-wrap gap-2 mb-2">
-          ${room.features
-            .map(
-              (f) =>
-                `<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">${f}</span>`
-            )
-            .join("")}
-        </div>
-        <div class="text-xs text-gray-500">
-          유형: <span class="font-medium">${room.type}</span>
+        <div>
+          <div class="text-sm font-semibold text-gray-700">강의실 정보</div>
         </div>
       </div>
 
-      <!-- 주간 시간표 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex-1 flex flex-col min-h-[220px]">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm font-semibold text-gray-800">강의실 시간표 및 예약 현황</div>
-          <div class="flex items-center space-x-3 text-[10px] text-gray-500">
-            <div class="flex items-center">
-              <span class="w-3 h-3 rounded-full bg-rose-200 border border-rose-300 mr-1"></span> 수업중
-            </div>
-            <div class="flex items-center">
-              <span class="w-3 h-3 rounded-full bg-emerald-200 border border-emerald-300 mr-1"></span> 예약시간
-            </div>
-          </div>
+      <!-- ▶ 여기부터 3줄 구조 -->
+      <div class="space-y-2">
+        <!-- 1) 최상단 : 강의실 이름 -->
+        <div class="text-lg font-semibold text-gray-900">
+          ${room.name}
         </div>
-        <div class="overflow-x-auto overflow-y-auto text-xs">
-          <table class="w-full border border-gray-200 rounded-lg text-[11px]">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="border border-gray-200 px-2 py-1 text-center font-medium">시간</th>
-                ${days
-                  .map(
-                    (d) =>
-                      `<th class="border border-gray-200 px-2 py-1 text-center font-medium">${d}</th>`
-                  )
-                  .join("")}
-              </tr>
-            </thead>
-            <tbody>
-              ${weeklyRowsHtml}
-            </tbody>
-          </table>
+
+        <!-- 2) 중간 : 유형, 수용인원 -->
+        <div class="text-sm text-gray-600">
+          유형:
+          <span class="font-medium">${room.type}</span>
+          · 수용인원:
+          <span class="font-semibold">${room.capacity}</span>명
+        </div>
+
+        <!-- 3) 마지막 : 시설(프로젝터, 화이트보드 등) -->
+        <div class="flex flex-wrap gap-2 pt-1">
+          ${
+            room.features
+              .map(
+                (f) =>
+                  `<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">${f}</span>`
+              )
+              .join("")
+          }
         </div>
       </div>
     </div>
-  `;
+
+    <!-- 주간 시간표 (기존 코드 유지) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex-1 flex flex-col min-h-[260px]">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm font-semibold text-gray-800">강의실 시간표 및 예약 현황</div>
+        <div class="flex items-center space-x-3 text-[10px] text-gray-500">
+          <div class="flex items-center">
+            <span class="w-3 h-3 rounded-full bg-rose-200 border border-rose-300 mr-1"></span> 수업중
+          </div>
+          <div class="flex items-center">
+            <span class="w-3 h-3 rounded-full bg-emerald-200 border border-emerald-300 mr-1"></span> 예약시간
+          </div>
+        </div>
+      </div>
+      <div class="overflow-x-auto overflow-y-auto text-xs max-h-[360px]">
+        <table class="w-full border border-gray-200 rounded-lg text-[11px]">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="border border-gray-200 px-2 py-1 text-center font-medium">시간</th>
+              ${["월","화","수","목","금"]
+                .map(
+                  (d) =>
+                    `<th class="border border-gray-200 px-2 py-1 text-center font-medium">${d}</th>`
+                )
+                .join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${weeklyRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+`;
+
 }
 
 /********************************************************

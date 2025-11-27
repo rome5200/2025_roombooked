@@ -17,39 +17,102 @@ async function main() {
     console.log('✅ DB 연결 성공!\n');
 
     // =========================================================
-    //  🔎 80x 강의실이 실제로 죽헌_시간표에 존재하는지 확인
+    //  🔎 80x 강의실에서 진행되는 모든 수업 정보 출력
+    //      - 강의실1_번호 / 요일1 / 교시1
+    //      - 강의실2_번호 / 요일2 / 교시2
+    //   를 하나의 테이블처럼 UNION 해서 조회
     // =========================================================
-    console.log("🔍 [검사] 죽헌_시간표에 '80x' 강의실이 있는지 검사합니다...\n");
+    console.log("🔍 [검사] 죽헌_시간표에서 '80x' 강의실(801, 802, ...) 수업 목록을 조회합니다...\n");
 
-    const [roomCheck] = await conn.query(
+    // 1) 강의실별로 몇 건씩 있는지 요약
+    const [roomSummary] = await conn.query(
       `
-      SELECT 
-        id,
-        과목코드,
-        과목명,
-        대표교수,
-        강의실1_번호,
-        요일1,
-        교시1,
-        강의실2_번호,
-        요일2,
-        교시2
-      FROM 죽헌_시간표
-      WHERE 
-        강의실1_번호 LIKE '80%' 
-        OR 강의실2_번호 LIKE '80%'
+      SELECT
+        t.강의실번호,
+        COUNT(*) AS 수업개수
+      FROM (
+        SELECT 강의실1_번호 AS 강의실번호
+        FROM 죽헌_시간표
+        WHERE 강의실1_번호 LIKE '80%'
+
+        UNION ALL
+
+        SELECT 강의실2_번호 AS 강의실번호
+        FROM 죽헌_시간표
+        WHERE 강의실2_번호 LIKE '80%'
+      ) AS t
+      GROUP BY t.강의실번호
+      ORDER BY t.강의실번호;
       `
     );
 
-    if (roomCheck.length === 0) {
+    if (roomSummary.length === 0) {
       console.log("⚠️ 80x로 시작하는 강의실 번호(801~809 등)가 없습니다!");
-      console.log("   → 현재 DB에는 202, 210, 204 같은 실제 강의실 번호만 존재할 가능성이 높습니다.");
+      console.log("   → 현재 DB에는 202, 210, 204 같은 실제 강의실 번호만 존재할 가능성이 높습니다.\n");
     } else {
-      console.log("✅ 80x 번호가 포함된 강의실 데이터 발견!");
-      roomCheck.forEach((r, i) => console.log(`  #${i + 1}:`, r));
+      console.log("✅ 80x 강의실별 수업 개수 요약:");
+      roomSummary.forEach((r, i) => {
+        console.log(
+          `  #${i + 1}: 강의실=${r.강의실번호}, 수업개수=${r.수업개수}`
+        );
+      });
+      console.log("\n----------------------------------------------\n");
     }
 
-    console.log("\n----------------------------------------------\n");
+    // 2) 80x 강의실에서 진행되는 모든 수업 상세 목록
+    const [roomDetail] = await conn.query(
+      `
+      SELECT
+        x.강의실번호,
+        x.요일,
+        x.교시,
+        x.과목코드,
+        x.과목명,
+        x.대표교수
+      FROM (
+        SELECT 
+          강의실1_번호 AS 강의실번호,
+          요일1       AS 요일,
+          교시1       AS 교시,
+          과목코드,
+          과목명,
+          대표교수
+        FROM 죽헌_시간표
+        WHERE 강의실1_번호 LIKE '80%'
+
+        UNION ALL
+
+        SELECT 
+          강의실2_번호 AS 강의실번호,
+          요일2       AS 요일,
+          교시2       AS 교시,
+          과목코드,
+          과목명,
+          대표교수
+        FROM 죽헌_시간표
+        WHERE 강의실2_번호 LIKE '80%'
+      ) AS x
+      ORDER BY x.강의실번호, x.요일, x.교시;
+      `
+    );
+
+    if (roomDetail.length === 0) {
+      console.log("⚠️ 80x 강의실 수업 상세 데이터가 없습니다.");
+    } else {
+      console.log("📚 80x 강의실 수업 상세 목록 (최대 100건만 표기):\n");
+      roomDetail.slice(0, 100).forEach((r, i) => {
+        console.log(
+          `  #${i + 1}: 강의실=${r.강의실번호}, 요일=${r.요일}, 교시=${r.교시}, 과목코드=${r.과목코드}, 과목명=${r.과목명}, 교수=${r.대표교수}`
+        );
+      });
+      if (roomDetail.length > 100) {
+        console.log(`\n  ... (총 ${roomDetail.length}건 중 100건만 출력)\n`);
+      }
+    }
+
+    console.log("\n==============================================");
+    console.log("📋 [mydb] 전체 테이블 & 컬럼 & 데이터 예시 출력");
+    console.log("==============================================\n");
 
     // =========================================================
     //  기존 전체 테이블/컬럼/데이터 출력 로직
