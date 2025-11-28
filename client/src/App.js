@@ -1,8 +1,643 @@
-// src/App.js
-import React from "react";
+import React, { useEffect } from 'react';
+import './App.css';
 
-export default function App() {
-  // React는 index.html에 root가 없으면 마운트하지 않음
-  // 따라서 이 컴포넌트는 실질적으로 아무 역할도 하지 않음
-  return null;
+const staticMarkup = `
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+      <!-- Header -->
+      <header
+        class="bg-gradient-to-r from-white to-blue-50 rounded-xl shadow-xl p-8 mb-8 border border-blue-100"
+      >
+        <div class="flex items-center mb-3">
+          <div
+            class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4 shadow-lg"
+          >
+            <svg
+              class="w-6 h-6 text-white"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h1
+              id="system-title"
+              class="text-4xl font-bold bg-gradient-to-r from-gray-800 to-blue-600 bg-clip-text text-transparent mb-2"
+            >
+              강의실 예약 시스템
+            </h1>
+            <p class="text-gray-600 text-lg">
+              ✨ 실시간 강의실 현황 확인 및 스마트 예약
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <div
+        class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-2xl p-8 border border-gray-100"
+      >
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center">
+            <div
+              class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-md"
+            >
+              <svg
+                class="w-4 h-4 text-white"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2v8h12V6H4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">
+              <span id="building-name">죽헌정보관</span> 8층
+            </h2>
+          </div>
+          <div
+            class="flex items-center space-x-6 text-sm bg-white rounded-xl p-4 shadow-lg border border-gray-100"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-4 h-4 bg-gradient-to-r from-green-400 to-green-500 rounded-full mr-2 shadow-sm"
+              ></div>
+              <span class="font-medium text-gray-700">사용가능</span>
+            </div>
+            <div class="flex items-center">
+              <div
+                class="w-4 h-4 bg-gradient-to-r from-red-400 to-red-500 rounded-full mr-2 shadow-sm"
+              ></div>
+              <span class="font-medium text-gray-700">강의중</span>
+            </div>
+            <div class="flex items-center">
+              <div
+                class="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mr-2 shadow-sm"
+              ></div>
+              <span class="font-medium text-gray-700">예약됨</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floor Plan SVG -->
+        <div
+          class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6 overflow-auto shadow-inner border border-gray-200"
+        >
+          <svg
+            viewBox="0 0 1000 500"
+            class="w-full h-[500px] border border-gray-200 rounded"
+          >
+            <!-- Building Structure -->
+            <rect
+              x="50"
+              y="50"
+              width="900"
+              height="400"
+              fill="none"
+              stroke="#374151"
+              stroke-width="4"
+            />
+
+            <!-- Horizontal Hallway -->
+            <rect
+              x="70"
+              y="235"
+              width="860"
+              height="40"
+              fill="#f3f4f6"
+              stroke="#9ca3af"
+              stroke-width="2"
+            />
+            <text
+              x="500"
+              y="260"
+              text-anchor="middle"
+              class="text-base fill-gray-600"
+            >
+              복도
+            </text>
+
+            <!-- Top Row -->
+            <!-- 802호 -->
+            <rect
+              id="room-802"
+              x="70"
+              y="70"
+              width="130"
+              height="150"
+              rx="15"
+              ry="15"
+              class="room-available room-hover"
+              stroke="#374151"
+              stroke-width="3"
+            />
+            <text
+              x="135"
+              y="155"
+              text-anchor="middle"
+              class="text-lg font-medium fill-white"
+            >
+              802호
+            </text>
+
+            <!-- 801호 -->
+            <rect
+              id="room-801"
+              x="215"
+              y="70"
+              width="130"
+              height="150"
+              rx="15"
+              ry="15"
+              class="room-available room-hover"
+              stroke="#374151"
+              stroke-width="3"
+            />
+            <text
+              x="280"
+              y="155"
+              text-anchor="middle"
+              class="text-lg font-medium fill-white"
+            >
+              801호
+            </text>
+
+            <!-- 라운지 -->
+            <rect
+              x="430"
+              y="70"
+              width="150"
+              height="150"
+              rx="15"
+              ry="15"
+              fill="#fef3c7"
+              stroke="#f59e0b"
+              stroke-width="3"
+            />
+            <text
+              x="505"
+              y="145"
+              text-anchor="middle"
+              class="text-lg fill-gray-700"
+            >
+              라운지
+            </text>
+            <text
+              x="505"
+              y="165"
+              text-anchor="middle"
+              class="text-sm fill-gray-600"
+            >
+              휴게공간
+            </text>
+
+            <!-- 807호 -->
+            <rect
+              id="room-807"
+              x="665"
+              y="70"
+              width="130"
+              height="150"
+              rx="15"
+              ry="15"
+              class="room-available room-hover"
+              stroke="#374151"
+              stroke-width="3"
+            />
+            <text
+              x="730"
+              y="155"
+              text-anchor="middle"
+              class="text-lg font-medium fill-white"
+            >
+              807호
+            </text>
+
+            <!-- 808호 -->
+            <rect
+              id="room-808"
+              x="810"
+              y="70"
+              width="130"
+              height="150"
+              rx="15"
+              ry="15"
+              class="room-available room-hover"
+              stroke="#374151"
+              stroke-width="3"
+            />
+            <text
+              x="875"
+              y="155"
+              text-anchor="middle"
+              class="text-lg font-medium fill-white"
+            >
+              808호
+            </text>
+
+            <!-- Bottom Row -->
+            <!-- 803호 -->
+            <rect
+              id="room-803"
+              x="70"
+              y="290"
+              width="260"
+              height="150"
+              rx="15"
+              ry="15"
+              class="room-available room-hover"
+              stroke="#374151"
+              stroke-width="3"
+            />
+            <text
+              x="200"
+              y="375"
+              text-anchor="middle"
+              class="text-lg font-medium fill-white"
+            >
+              803호
+            </text>
+
+            <!-- 804호 -->
+            <rect
+              id="room-804"
+              x="345"
+              y="290"
+              width="260"
+              height="150"
+              rx="15"
+              ry="15"
+              class="room-available room-hover"
+              stroke="#374151"
+              stroke-width="3"
+            />
+            <text
+              x="475"
+              y="375"
+              text-anchor="middle"
+              class="text-lg font-medium fill-white"
+            >
+              804호
+            </text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Reservation Modal -->
+      <div
+        id="reservation-modal"
+        class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm hidden items-center justify-center z-50"
+      >
+        <div
+          class="bg-white rounded-2xl p-8
+                 w-[95vw] max-w-6xl
+                 h-[90vh]
+                 mx-4 shadow-2xl border border-gray-100
+                 flex flex-col"
+        >
+          <div
+            class="grid grid-cols-1 lg:grid-cols-5 gap-8 flex-1 overflow-hidden"
+          >
+            <!-- Schedule Section -->
+            <div
+              class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6 border border-gray-200
+                     lg:col-span-3 flex flex-col"
+            >
+              <div class="flex items-center mb-4">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3 shadow-md"
+                >
+                  <svg
+                    class="w-4 h-4 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">
+                  강의실 정보
+                </h3>
+              </div>
+              <div
+                id="modal-schedule-content"
+                class="text-sm flex-1 overflow-auto"
+              >
+                <div class="text-gray-500 text-sm">
+                  시간표/예약 정보는 서버에서 받아와서 이 영역에
+                  렌더링합니다.
+                </div>
+              </div>
+            </div>
+
+            <!-- Reservation Form Section -->
+            <div
+              class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200
+                     lg:col-span-2 flex flex-col"
+            >
+              <div class="flex items-center mb-6">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-md"
+                >
+                  <svg
+                    class="w-4 h-4 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">강의실 예약</h3>
+              </div>
+              <form id="reservation-form" class="flex flex-col h-full">
+                <div class="space-y-5 flex-1 overflow-auto pr-1">
+                  <div>
+                    <label
+                      class="flex items-center text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      <svg
+                        class="w-4 h-4 mr-2 text-indigo-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2v8h12V6H4z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      강의실
+                    </label>
+                    <input
+                      type="text"
+                      id="modal-room"
+                      readonly
+                      class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 shadow-sm font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="flex items-center text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      <svg
+                        class="w-4 h-4 mr-2 text-indigo-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      날짜
+                    </label>
+                    <input
+                      type="date"
+                      id="modal-date"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                    />
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        class="flex items-center text-sm font-semibold text-gray-700 mb-2"
+                      >
+                        <svg
+                          class="w-4 h-4 mr-2 text-indigo-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                        시작 시간
+                      </label>
+                      <input
+                        type="time"
+                        id="modal-start-time"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="flex items-center text-sm font-semibold text-gray-700 mb-2"
+                      >
+                        <svg
+                          class="w-4 h-4 mr-2 text-indigo-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                        종료 시간
+                      </label>
+                      <input
+                        type="time"
+                        id="modal-end-time"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      class="flex items-center text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      <svg
+                        class="w-4 h-4 mr-2 text-indigo-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      사용 목적
+                    </label>
+                    <input
+                      type="text"
+                      id="modal-purpose"
+                      placeholder="예: 스터디 그룹"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="flex items-center text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      <svg
+                        class="w-4 h-4 mr-2 text-indigo-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      예약자명
+                    </label>
+                    <input
+                      type="text"
+                      id="modal-user-name"
+                      placeholder="이름을 입력하세요"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                    />
+                  </div>
+                </div>
+                <div class="flex justify-end space-x-4 mt-8">
+                  <button
+                    type="button"
+                    id="cancel-reservation"
+                    class="px-6 py-3 text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    id="confirm-reservation"
+                    class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                  >
+                    예약하기
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Chatbot Button -->
+      <div
+        id="chatbot-button"
+        class="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-2xl cursor-pointer hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center z-40 hover:scale-110 animate-pulse"
+      >
+        <span class="text-white font-bold text-lg drop-shadow-sm">AI</span>
+      </div>
+
+      <!-- AI Chatbot Modal -->
+      <div
+        id="chatbot-modal"
+        class="fixed bottom-24 right-6 w-80 h-96 bg-white rounded-xl shadow-2xl hidden z-50 border border-gray-200"
+      >
+        <div class="flex flex-col h-full">
+          <div
+            class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-t-xl flex justify-between items-center"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-2"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h3 class="font-semibold">AI 강의실 추천</h3>
+            </div>
+            <button
+              id="close-chatbot"
+              class="text-white hover:text-gray-200 transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-20"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            id="chat-container"
+            class="flex-1 overflow-y-auto p-4 bg-gradient-to-br from-gray-50 to-blue-50"
+          >
+            <div class="chat-message mb-3">
+              <div
+                class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl p-3 max-w-xs text-sm shadow-lg"
+              >
+                ✨ 안녕하세요! 강의실 예약을 도와드리겠습니다.
+              </div>
+            </div>
+          </div>
+          <div class="p-4 border-t border-gray-200 bg-white rounded-b-xl">
+            <div class="flex space-x-2">
+              <input
+                type="text"
+                id="chat-input"
+                placeholder="예: 10명 스터디룸 추천해줘"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm"
+              />
+              <button
+                id="send-chat"
+                class="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 text-sm shadow-lg hover:shadow-xl"
+              >
+                전송
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+function App() {
+  useEffect(() => {
+    const bodyClassName = 'min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 font-sans';
+    const previousBodyClassName = document.body.className;
+    document.body.className = bodyClassName;
+
+    const scriptId = 'public-app-js';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = `${process.env.PUBLIC_URL}/app.js`;
+      script.async = false;
+      document.body.appendChild(script);
+    }
+
+    return () => {
+      document.body.className = previousBodyClassName;
+    };
+  }, []);
+
+  return (
+    <div
+      className="App"
+      dangerouslySetInnerHTML={ { __html: staticMarkup } }
+    />
+  );
 }
+
+export default App;
