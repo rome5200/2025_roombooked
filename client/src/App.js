@@ -2,6 +2,7 @@
  *  강의실 예약 시스템 (src/App.js - React 버전)
  *  - 백엔드: http://localhost:8000/api (또는 EC2 IP:8000/api)
  *  - 사용 테이블: 죽헌_시간표, 학생_강의실예약
+ *  - AI 챗봇: /api/chat → Node 서버 → Lambda → Bedrock(Claude 3.5 Haiku)
  *******************************************************/
 
 import { useEffect } from "react";
@@ -9,12 +10,10 @@ import { useEffect } from "react";
 // React 18 StrictMode에서 useEffect 두 번 실행되는 것 방지용
 let initialized = false;
 
-// ✅ 백엔드 API 기본 URL (환경변수 말고, 일단 명시적으로 고정)
-//  - 로컬에서 서버와 프론트를 같이 돌릴 땐:  http://localhost:8000/api
-//  - EC2에 서버만 올려두고, 로컬 브라우저에서 접속한다면: http://<EC2-IP-or-domain>:8000/api
+// ✅ 백엔드 API 기본 URL
+//   - 시간표/예약: /rooms, /reservations
+//   - 챗봇: /chat (서버가 Lambda로 프록시)
 const API_BASE_URL = "http://3.129.18.124:8000/api";
-// 예) EC2에서 테스트하면 이렇게 바꾸기
-// const API_BASE_URL = "http://<EC2-IP-or-domain>:8000/api";
 
 // 전역 상태
 let currentRoomId = null;
@@ -65,12 +64,11 @@ async function fetchRoomSchedule(roomId, date) {
 
     console.log("📡 상태코드:", res.status);
     if (!res.ok) {
-      // 가능하면 에러 바디도 한 번 찍어보자
       try {
         const text = await res.text();
         console.error("❌ 응답 본문:", text);
       } catch (_) {
-        // ignore
+        /* ignore */
       }
       console.error("❌ /rooms/:roomId/schedule 응답 오류:", res.status);
       return null;
@@ -113,7 +111,7 @@ async function createReservation(reservationData) {
 }
 
 /********************************************************
- * 2. 시간표/예약 카드 HTML 생성 (프로토타입 스타일)
+ * 2. 시간표/예약 카드 HTML 생성
  ********************************************************/
 
 function generateScheduleHtml(roomId, scheduleData) {
@@ -130,7 +128,6 @@ function generateScheduleHtml(roomId, scheduleData) {
 
   const todayDayName = getKoreanDayName(date); // 오늘 요일 (예약 표시용)
 
-  // ----- 2) 주간 시간표 그리드용 데이터 구성 -----
   const days = ["월", "화", "수", "목", "금"];
   const timeSlots = [
     "09:00",
@@ -224,7 +221,7 @@ function generateScheduleHtml(roomId, scheduleData) {
     weeklyRowsHtml += `</tr>`;
   });
 
-  // ----- 3) 최종 카드 HTML -----
+  // 최종 카드 HTML
   return `
   <div class="h-full flex flex-col gap-4">
     <!-- 상단 카드 (강의실 정보) -->
@@ -412,8 +409,8 @@ async function handleReservationSubmit(e) {
 }
 
 /********************************************************
- * 5. 챗봇 (기존 기능 유지)
- ********************************************************/
+ * 5. 챗봇 (Claude API 연동 - 서버 → Lambda 프록시 사용)
+/********************************************************/
 
 function setupChatbot() {
   const chatbotButton = document.getElementById("chatbot-button");
@@ -438,49 +435,83 @@ function setupChatbot() {
 
   function addChatMessage(message, sender) {
     const msgDiv = document.createElement("div");
-    msgDiv.className = "chat-message mb-3";
+
     if (sender === "user") {
+      msgDiv.className = "chat-message mb-3";
       msgDiv.innerHTML = `
         <div class="flex justify-end">
           <div class="bg-gray-300 text-gray-800 rounded-lg p-3 max-w-xs text-sm">
             ${message}
           </div>
         </div>`;
+    } else if (sender === "bot-temp") {
+      msgDiv.className = "chat-message mb-3 bot-temp";
+      msgDiv.innerHTML = `
+        <div class="bg-gradient-to-r from-blue-400 to-indigo-500 text-white rounded-lg p-3 max-w-xs text-sm opacity-70">
+          ${message}
+        </div>`;
     } else {
+      msgDiv.className = "chat-message mb-3";
       msgDiv.innerHTML = `
         <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg p-3 max-w-xs text-sm">
           ${message}
         </div>`;
     }
+
     chatContainer.appendChild(msgDiv);
     chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    return msgDiv;
   }
 
-  function generateChatResponse(msg) {
-    const m = msg.toLowerCase();
-    if (m.includes("스터디")) {
-      return "👥 스터디에 적합한 강의실은 803호(세미나실), 807호(일반강의실)입니다.";
+  async function generateChatResponse(msg) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg }), // 서버가 { message }를 받아 Lambda로 전달
+      });
+
+      if (!res.ok) {
+        console.error("❌ /api/chat 응답 오류:", res.status);
+        return "챗봇 서버와 통신 중 오류가 발생했습니다.";
+      }
+
+      const json = await res.json();
+      if (!json.success) {
+        console.error("❌ /api/chat success=false:", json.message);
+        return "챗봇이 현재 응답할 수 없습니다.";
+      }
+
+      return json.reply || "응답이 비어 있어요.";
+    } catch (err) {
+      console.error("❌ generateChatResponse 에러:", err);
+      return "챗봇 요청 중 오류가 발생했습니다.";
     }
-    if (m.includes("발표") || m.includes("프레젠테이션")) {
-      return "📽 발표용으로는 801호, 802호, 807호(프로젝터 보유)를 추천합니다.";
-    }
-    if (m.includes("컴퓨터") || m.includes("실습")) {
-      return "💻 컴퓨터 실습에는 808호가 적합합니다.";
-    }
-    return "원하는 인원 수, 용도(스터디/발표/실습 등)를 알려주시면 강의실을 추천해 드릴게요!";
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
+
     addChatMessage(text, "user");
     chatInput.value = "";
-    setTimeout(() => {
-      addChatMessage(generateChatResponse(text), "bot");
-    }, 500);
+
+    const placeholder = addChatMessage("생각 중입니다...", "bot-temp");
+
+    const reply = await generateChatResponse(text);
+
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.removeChild(placeholder);
+    }
+
+    addChatMessage(reply, "bot");
   }
 
-  sendChatBtn.addEventListener("click", sendMessage);
+  sendChatBtn.addEventListener("click", () => {
+    sendMessage();
+  });
+
   chatInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") sendMessage();
   });
