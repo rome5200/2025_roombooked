@@ -140,13 +140,13 @@
               <div
                 class="w-4 h-4 bg-gradient-to-r from-red-400 to-red-500 rounded-full mr-2 shadow-sm"
               ></div>
-              <span class="font-medium text-gray-700">강의중</span>
+              <span class="font-medium text-gray-700">사용중</span>
             </div>
             <div class="flex items-center">
               <div
                 class="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mr-2 shadow-sm"
               ></div>
-              <span class="font-medium text-gray-700">예약됨</span>
+              <span class="font-medium text-gray-700">사용불가</span>
             </div>
           </div>
         </div>
@@ -221,7 +221,7 @@
               height="150"
               rx="15"
               ry="15"
-              class="room-available room-hover"
+              fill="#a0a0a0"
               stroke="#374151"
               stroke-width="3"
             />
@@ -242,15 +242,15 @@
               height="150"
               rx="15"
               ry="15"
-              fill="#fef3c7"
-              stroke="#f59e0b"
+              fill="#a0a0a0"
+              stroke="#666666"
               stroke-width="3"
             />
             <text
               x="505"
               y="145"
               text-anchor="middle"
-              class="text-lg fill-gray-700"
+              class="text-lg font-medium fill-white-700"
             >
               라운지
             </text>
@@ -258,7 +258,7 @@
               x="505"
               y="165"
               text-anchor="middle"
-              class="text-sm fill-gray-600"
+              class="text-lg font-medium fill-white-600"
             >
               휴게공간
             </text>
@@ -678,7 +678,8 @@
       </div>
     </div>
 
-    <!-- 여기서 외부 JS 파일만 불러오기 -->
-    <script src="app.js"></script>
+    <!-- React가 붙을 루트 (화면에는 거의 안 보이지만 필수) -->
+    <div id="root"></div>
+    <!-- React 번들은 CRA/Vite가 자동으로 주입 -->
   </body>
 </html>
